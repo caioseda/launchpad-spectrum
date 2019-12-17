@@ -28,11 +28,11 @@ def start():
     # criaFogo()
     # printaDados()
     # render()
-    recolorMode = False
     while True:
         event = eventUpdate()
-        colorChanger(event,recolorMode)
+        colorChanger(event)
         atualizaPixel(event)
+        print("temp_color_list: ",temp_color_list)
         time.sleep(0.01)
     # set_interval(atualizaPixel(),1)
 
@@ -71,6 +71,7 @@ def printaDados():
     print("\n\n Array: ",pixel_array)
 
 def render():
+
     # lp.LedAllOn(0)
     for linha in range(0,altura):
         for coluna in range(0,largura):
@@ -93,54 +94,69 @@ def criaFogo():
         pixel_array[pixel_index] = 7
 
 def atualizaPixel(event):
+    offset = colorShifter(event)
+
+    if not offset:
+        offset=0
 
     for coluna in range(0,largura):
         for linha in range(0,altura):
             pixel_index = coluna + (linha * largura)
             
-            colorShifter(event,pixel_index)
+            # pixel_array[pixel_index] = color_array[pixel_index+offset]
             # criaPropagacao(pixel_index)
     printaDados()
     render()
 
-def colorChanger(event,mode):
+recolorMode = False
+def colorChanger(event):
+    global recolorMode
     if event[2] == 127 \
         and event[0] >= 0 and event[0] <= 7\
-        and event[1] >= 1 and event[1] >= 8:
+        and event[1] >= 1 and event[1] <= 8:
         
-        position = event[0] + (event[1] * 8)
+        x = event[0]
+        y = event[1] - 1
+
+        position = x + (y * 8)
         color =  pixel_array[position]
 
         temp_color_list.append([position,color])
-
-        if mode == True:
-            print(temp_color_list)
+        
+        if recolorMode == True:
+            print("TRUE")
             
             pixel_array[temp_color_list[0][0]] = temp_color_list[1][1]
             pixel_array[temp_color_list[1][0]] = temp_color_list[0][1]
 
-            mode = False
+            recolorMode = False
             temp_color_list.clear()
         else:
-            mode = True
+            recolorMode = True
 
-def colorShifter(event,pixel_index):
+def colorShifter(event):
+    ##### REFAZER ####
+    """
+
+
+    """
     if event == [3,0,127]:
         lp.LedCtrlXYByCode(3,0,72)
         lp.LedCtrlXYByCode(3,0,0)
-        if pixel_array[pixel_index] < 127:
-            pixel_array[pixel_index] += 1
+        #Se o ultimo led ta dentro do limite de cor
+        if pixel_array[63] < 127:
+            return 1
         else:
-            pixel_array[pixel_index] = 0
+            return 0
 
     if event == [2,0,127]:
         lp.LedCtrlXYByCode(2,0,72)
         lp.LedCtrlXYByCode(2,0,0)
-        if pixel_array[pixel_index] > 0:
-            pixel_array[pixel_index] -= 1
+        #Se o primeiro led ta dentro do limite de cor
+        if pixel_array[0] > 0:
+            return -1
         else:
-            pixel_array[pixel_index] = 127
-
+            return 0
 
 def criaPropagacao(pixel_index_atual):
     pixel_de_baixo = pixel_index_atual + largura
