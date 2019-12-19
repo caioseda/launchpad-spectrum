@@ -127,8 +127,8 @@ def render():
         for coluna in range(0,largura):
             pixel_index = ((linha-1)*altura)+coluna
             
-
-            lp.LedCtrlXYByCode(coluna, linha, pixel_array[pixel_index])
+            color_index = pixel_array[pixel_index]
+            lp.LedCtrlXYByCode(coluna, linha, color_array[color_index])
 
 def criaEstruturaDadosPixels(): 
     quantidade_pixels = altura * largura
@@ -181,7 +181,7 @@ def eventChecker(event):
         shiftColor(lastEvent,0)
 
 
-offset = 0
+offset = -1
 def shiftColor(event,direction): 
     global pixel_array,offset
  
@@ -193,9 +193,8 @@ def shiftColor(event,direction):
 
                     if x == largura-1:
                         maxi = altura * largura
-                        index_new_color = maxi + (pixel_index-x) + offset
-                        print(pixel_index,index_new_color)
-                        pixel_array[pixel_index] = color_array[index_new_color]    
+                        new_index_color = maxi + (pixel_index-x) + offset
+                        pixel_array[pixel_index] = new_index_color    
                     else:
                         
                         pixel_array[pixel_index] = pixel_array[pixel_index+1] 
@@ -204,7 +203,7 @@ def shiftColor(event,direction):
                     x_ = 7 - x 
                     pixel_index = x_ + (y-1)*largura
                     if x_ == 0:
-                        pixel_array[pixel_index] = color_array[pixel_index+offset]    
+                        pixel_array[pixel_index] = pixel_index+offset
                     else:
                         pixel_array[pixel_index] = pixel_array[pixel_index-1] 
                 # elif direction < 0:
