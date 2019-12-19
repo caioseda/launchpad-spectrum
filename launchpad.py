@@ -5,6 +5,14 @@ import time
 import numpy as np
 import math
 
+"""
+    Shift color deve mexer no pixel array uma vez que o pixel array eh uma view que constantemente eh atualizada com os estados dos
+    color_array
+
+    o pixel_index contem apenas ponteiros para as verdadeiras cores
+
+    o recolor deve mexer no color_array uma vez que ele representa a organização das cores em si
+"""
 
 altura = 8
 largura = 8
@@ -70,6 +78,23 @@ def eventUpdate():
         # else: 
 
         #     pixel_array[0]+=1
+def printArray(array,linhas=2):
+    print(" [",end="")
+    elementos = 0
+    for i in range(0,len(array)):
+        if len(str(array[i]))==1:
+            comp = "   "
+        elif len(str(array[i]))==2:
+            comp = "  "
+        else:
+            comp=" "
+
+        if elementos == int(len(array)/linhas):
+            elementos = 0
+            print("\n              ",end="")
+        print(comp,array[i],sep="",end="")
+        elementos +=1
+    print("]\n")
 
 def printaDados(event):
 
@@ -85,26 +110,23 @@ def printaDados(event):
             else: 
                 print(pixel_array[pixel_index],end=' ')
     
-    print("\n\n Pixel Array: [",end="")
-    for i in range(0,len(pixel_array)):
-        if len(str(pixel_array[i]))==1:
-            comp = "  "
-        elif len(str(pixel_array[i]))==2:
-            comp = " "
-        else:
-            comp=""
+    print("\n\n Pixel Array:",end="")
+    printArray(pixel_array)
 
-        if i == int(len(pixel_array)/2):
-            print("\n               ",end="")
-        print(comp,pixel_array[i],sep="",end="")
-    print("]")
+    print("Color Array:",end="")
+    printArray(color_array,4)
+
+    print("temp color:",end="")
+    printArray(temp_color_list,1)
+
     print("Event:",event)
     print("lastEvent: ",lastEvent)
-
+    print("offset: ",offset)
 def render():
     for linha in range(1,altura+1):
         for coluna in range(0,largura):
             pixel_index = ((linha-1)*altura)+coluna
+            
 
             lp.LedCtrlXYByCode(coluna, linha, pixel_array[pixel_index])
 
@@ -117,6 +139,7 @@ def atualizaPixel(event):
     for coluna in range(0,largura):
         for linha in range(1,altura+1):
             pixel_index = coluna + ((linha -1)* largura)
+            pixel_array[pixel_index] = color_array[pixel_index]
             pass
             # criaPropagacao(pixel_index)
 
@@ -130,15 +153,16 @@ def recolor(event):
         x = event[0]
         y = event[1] - 1
 
-        position = x + (y * 8)
-        color =  pixel_array[position]
+        pixel_index = x + (y * 8)
+        color_index = pixel_array[pixel_index]
+        color =  color_array[color_index]
 
-        temp_color_list.append([position,color])
+        temp_color_list.append([color_index,color])
         
         if recolorMode == True:
             
-            pixel_array[temp_color_list[0][0]] = temp_color_list[1][1]
-            pixel_array[temp_color_list[1][0]] = temp_color_list[0][1]
+            color_array[temp_color_list[0][0]] = temp_color_list[1][1]
+            color_array[temp_color_list[1][0]] = temp_color_list[0][1]
 
             recolorMode = False
             temp_color_list.clear()
@@ -153,22 +177,52 @@ def eventChecker(event):
             shiftColor(lastEvent,-1)
         else:
             shiftColor(lastEvent,1)
-
+    else:
+        shiftColor(lastEvent,0)
 
 
 offset = 0
-def shiftColor(event,direction):
+def shiftColor(event,direction): 
     global pixel_array,offset
-    
-    limMin = 0 + offset + direction
-    limMax = len(pixel_array) + offset + direction
+ 
+    if (offset < 8 and direction > 0) or (offset > -1 and direction < 0):    
+        for x in range(0,largura):
+            for y in range(1,altura+1):
+                if direction > 0:
+                    pixel_index= x + (y-1)*largura
 
-    if limMin < 0 or limMax > len(color_array):
-        limMin = 0 + offset
-        limMax = len(pixel_array) + offset
-    else:
-        pixel_array = color_array[limMin:limMax]
+                    if x == largura-1:
+                        maxi = altura * largura
+                        index_new_color = maxi + (pixel_index-x) + offset
+                        print(pixel_index,index_new_color)
+                        pixel_array[pixel_index] = color_array[index_new_color]    
+                    else:
+                        
+                        pixel_array[pixel_index] = pixel_array[pixel_index+1] 
+                
+                elif direction < 0:
+                    x_ = 7 - x 
+                    pixel_index = x_ + (y-1)*largura
+                    if x_ == 0:
+                        pixel_array[pixel_index] = color_array[pixel_index+offset]    
+                    else:
+                        pixel_array[pixel_index] = pixel_array[pixel_index-1] 
+                # elif direction < 0:
         offset += direction
+    else:
+        pass
+    
+    # global pixel_array,offset
+    
+    # limMin = 0 + offset + direction
+    # limMax = len(pixel_array) + offset + direction
+
+    # if limMin < 0 or limMax > len(color_array):
+    #     limMin = 0 + offset
+    #     limMax = len(pixel_array) + offset
+    # else:
+    #     pixel_array = color_array[limMin:limMax]
+    #     offset += direction
 
 def criaGridColor():
     for coluna in range(0,largura):
